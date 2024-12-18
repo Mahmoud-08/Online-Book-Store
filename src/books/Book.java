@@ -23,6 +23,30 @@ public class Book {
         this.reviews = new ArrayList<>(); // Initialize the reviews list
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setPopularity(int popularity) {
+        this.popularity = popularity;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
+
     // Getter methods
     public String getTitle() {
         return title;

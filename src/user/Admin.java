@@ -14,6 +14,8 @@ public class Admin extends User {
         System.out.println("Role: Admin");
     }
 
+
+
     public InventoryManager getInventoryManager() {
         return inventoryManager;
     }

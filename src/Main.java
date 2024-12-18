@@ -18,6 +18,11 @@ import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) {
+        //TODO: SEPERATE MAIN FUNCTION INTO CLASSES TO BE READABLE
+        //TODO: FIX SEARCHING BOOKS BY AUTHOR
+        //TODO: FIX CATEGORIES IN ADMIN
+        //TODO: ADMIN CONFIRMATION AND MANAGEMENT OF ORDERS
+
         // Create books manually
         Book book1 = new Book("Java Programming", "Author A", 25.99, 10, "IT", 50);
         Book book2 = new Book("Java", "Author B", 30.99, 5, "History", 80);
@@ -87,17 +92,123 @@ public class Main {
         while (true) {
             System.out.println("\nAdmin Menu:");
             System.out.println("1. View Inventory");
-            System.out.println("2. Exit");
+            System.out.println("2. Add books");
+            System.out.println("3. Edit books");
+            System.out.println("4. Delete books");
+            System.out.println("5. Add categories");
+            System.out.println("6. Edit categories");
+            System.out.println("7. Delete categories");
+            System.out.println("8. Exit");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine();
 
             switch (choice) {
                 case 1:
                     System.out.println("Books in Inventory:");
                     inventoryManager.getInventory().values().forEach(System.out::println);
                     break;
-                case 2:
+                case 2: {
+
+
+                    System.out.println("Enter book name:");
+                    String title = scanner.nextLine();
+
+                    System.out.println("Enter book price");
+                    int price = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.println("Enter book author");
+                    String author = scanner.nextLine();
+                    System.out.println("Enter the books' stock");
+                    int stock = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.println("Enter the book's popularity");
+                    int popularity = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.println("Enter the book's category");
+                    String category = scanner.nextLine();
+                    Book newBook = new Book(title, author, price, stock, category, popularity);
+                    inventoryManager.addBook(newBook);
+
+                    break;
+                }
+                case 3:
+                    System.out.println("List of books:");
+                    inventoryManager.getInventory().values().forEach(System.out::println);
+
+                    System.out.println("Enter book title to edit");
+                    String bookTitle = scanner.nextLine();
+
+                    if (!inventoryManager.getInventory().containsKey(bookTitle)) {
+                        System.out.println("Book not found.");
+                    } else {
+                        System.out.println("Select the attribute to edit:");
+                        System.out.println("1. title\n" +
+                                "2. category\n" +
+                                "3. stock\n" +
+                                "4. author\n" +
+                                "5. price\n" +
+                                "6. popularity");
+                        int newChoice = scanner.nextInt();
+
+                        String attribute = "";
+                        String newValue = "";
+
+                        switch (newChoice) {
+                            case 1:
+                                attribute = "title";
+                                System.out.println("Enter new title:");
+                                newValue = scanner.nextLine();
+                                break;
+                            case 2:
+                                attribute = "category";
+                                System.out.println("Enter new category:");
+                                newValue = scanner.nextLine();
+                                break;
+                            case 3:
+                                attribute = "stock";
+                                System.out.println("Enter new stock:");
+                                newValue = String.valueOf(scanner.nextInt());
+                                break;
+                            case 4:
+                                attribute = "author";
+                                System.out.println("Enter new author:");
+                                newValue = scanner.nextLine();
+                                break;
+                            case 5:
+                                attribute = "price";
+                                System.out.println("Enter new price:");
+                                newValue = String.valueOf(scanner.nextInt());
+                                break;
+                            case 6:
+                                attribute = "popularity";
+                                System.out.println("Enter new popularity:");
+                                newValue = String.valueOf(scanner.nextInt());
+                                break;
+                            default:
+                                System.out.println("Invalid choice.");
+                                break;
+                        }
+
+                        if (!attribute.isEmpty() && !newValue.isEmpty()) {
+                            boolean success = inventoryManager.editBook(bookTitle, attribute, newValue);
+                            if (success) {
+                                System.out.println("Book updated successfully.");
+                            } else {
+                                System.out.println("Failed to update the book.");
+                            }
+                        }
+                    }
+                    break;
+                case 4: {
+                    System.out.println("Enter book title to be deleted");
+                    String title = scanner.nextLine();
+                    if(inventoryManager.deleteBook(title))
+                        System.out.println("Book successfully got deleted");
+                     else
+                        System.out.println("Book failed to be deleted");
+                }
+                case 8:
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -256,7 +367,8 @@ public class Main {
                             System.out.println("Order successfully completed. Thank you!");
                             // Add the completed order to the OrderHistory (now tracking purchases)
                             cart.clearCart();
-                            orderHistory.addOrder(order); // Add to Order History (now tracking completed purchases)
+                            orderHistory.addOrder(order);
+                            order = null;// Add to Order History (now tracking completed purchases)
                         } else {
                             System.out.println("Order not confirmed. Returning to main menu.");
                         }
