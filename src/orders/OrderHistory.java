@@ -14,7 +14,7 @@ public class OrderHistory {
     // Add an order to history
 // Add completed order to history
     public void addOrder(Order order) {
-        if (order.getStatus() == OrderStatus.COMPLETED) {
+        if (order.getStatus() == OrderStatus.PENDING) {
             orders.add(order);
         }
     }
@@ -33,5 +33,14 @@ public class OrderHistory {
     // Get all orders (no customer filter)
     public List<Order> getOrders() {
         return orders;
+    }
+
+    public Order getOrderById(int confirmOrderId) {
+        for (Order order : orders) {
+            if (order.getId() == confirmOrderId) {
+                return order;
+            }
+        }
+        return null;
     }
 }

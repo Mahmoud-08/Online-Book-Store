@@ -12,7 +12,11 @@ import orders.Order;
 import orders.OrderStatus;
 import orders.OrderHistory;
 import reviews.Review;
+import discounts.*;
 
+import java.util.Set;
+import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -60,7 +64,7 @@ public class Main {
 
                 if (admin.validatePassword(password)) {
                     System.out.println("\nWelcome, Admin!");
-                    adminMenu(scanner, inventoryManager);
+                    adminMenu(scanner, inventoryManager, orderHistory);
                 } else {
                     System.out.println("Invalid credentials!");
                 }
@@ -88,7 +92,7 @@ public class Main {
         }
     }
 
-    private static void adminMenu(Scanner scanner, InventoryManager inventoryManager) {
+    private static void adminMenu(Scanner scanner, InventoryManager inventoryManager,OrderHistory orderHistory) {
         while (true) {
             System.out.println("\nAdmin Menu:");
             System.out.println("1. View Inventory");
@@ -98,7 +102,8 @@ public class Main {
             System.out.println("5. Add categories");
             System.out.println("6. Edit categories");
             System.out.println("7. Delete categories");
-            System.out.println("8. Exit");
+            System.out.println("8. Manage orders");
+            System.out.println("9. Exit");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
@@ -205,16 +210,76 @@ public class Main {
                     String title = scanner.nextLine();
                     if(inventoryManager.deleteBook(title))
                         System.out.println("Book successfully got deleted");
-                     else
+                    else
                         System.out.println("Book failed to be deleted");
                 }
                 case 8:
+                    manageOrders(scanner, orderHistory);
+                    break;
+                case 9:
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
         }
     }
+
+    private static void manageOrders(Scanner scanner, OrderHistory orderHistory) {
+        while (true) {
+            System.out.println("\nOrder Management:");
+            System.out.println("1. View All Orders");
+            System.out.println("2. Confirm Order");
+            System.out.println("3. Cancel Order");
+            System.out.println("4. Exit to Admin Menu");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+
+            switch (choice) {
+                case 1:
+                    System.out.println("All Orders:");
+                    List<Order> orders = orderHistory.getOrders();
+                    if (orders.isEmpty()) {
+                        System.out.println("No orders available.");
+                    } else {
+                        for (Order order : orders) {
+                            System.out.println(order);
+                        }
+                    }
+                    break;
+                case 2:
+                    System.out.print("Enter Order ID to confirm: ");
+                    int confirmOrderId = scanner.nextInt();
+                    scanner.nextLine(); // Consume newline
+                    Order orderToConfirm = orderHistory.getOrderById(confirmOrderId);
+                    if (orderToConfirm != null) {
+                        orderToConfirm.updateStatus(OrderStatus.CONFIRMED);
+                        orderHistory.addOrder(orderToConfirm);
+                        System.out.println("Order confirmed and moved to history.");
+                    } else {
+                        System.out.println("Order not found.");
+                    }
+                    break;
+                case 3:
+                    System.out.print("Enter Order ID to cancel: ");
+                    int cancelOrderId = scanner.nextInt();
+                    scanner.nextLine(); // Consume newline
+                    Order orderToCancel = orderHistory.getOrderById(cancelOrderId);
+                    if (orderToCancel != null) {
+                        orderToCancel.updateStatus(OrderStatus.CANCELLED);
+                        System.out.println("Order canceled.");
+                    } else {
+                        System.out.println("Order not found.");
+                    }
+                    break;
+                case 4:
+                    return; // Exit to Admin Menu
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
 
     private static void customerMenu(Scanner scanner, InventoryManager inventoryManager, Customer customer, OrderHistory orderHistory) {
         Cart cart = Cart.getInstance(); // Singleton cart
@@ -241,12 +306,12 @@ public class Main {
             scanner.nextLine(); // Consume newline
 
             switch (choice) {
-                case 1:
+                case 1:{
                     // Browse all books
                     System.out.println("Books in Inventory:");
                     inventoryManager.getInventory().values().forEach(System.out::println);
-                    break;
-                case 2:
+                    break;}
+                case 2:{
                     // Search by title or author
                     System.out.print("Enter title or author to search: ");
                     String query = scanner.nextLine();
@@ -259,8 +324,8 @@ public class Main {
                         System.out.println("Search Results:");
                         searchResults.forEach(System.out::println);
                     }
-                    break;
-                case 3:
+                    break;}
+                case 3:{
                     // Filter by category
                     System.out.print("Enter category to filter by: ");
                     String category = scanner.nextLine();
@@ -273,8 +338,8 @@ public class Main {
                         System.out.println("Filtered Books:");
                         filteredBooks.forEach(System.out::println);
                     }
-                    break;
-                case 4:
+                    break;}
+                case 4:{
                     // Sort by price or popularity
                     System.out.print("Sort by (1: Price, 2: Popularity): ");
                     int sortChoice = scanner.nextInt();
@@ -294,8 +359,8 @@ public class Main {
                             inventoryManager.getInventory().values().stream().toList());
                     System.out.println("Sorted Books:");
                     sortedBooks.forEach(System.out::println);
-                    break;
-                case 5:
+                    break;}
+                case 5:{
                     // Add Book to Cart
                     System.out.print("Enter the book title to add to cart: ");
                     String bookTitle = scanner.nextLine();
@@ -307,8 +372,8 @@ public class Main {
                     } else {
                         System.out.println("Book not found.");
                     }
-                    break;
-                case 6:
+                    break;}
+                case 6:{
                     // View Cart
                     if (cart.isEmpty()) {
                         System.out.println("Your cart is empty! Add books to the cart first.");
@@ -317,22 +382,52 @@ public class Main {
                         cart.getBooks().forEach(System.out::println);
                     }
 
-                    break;
-                case 7:
+                    break;}
+                case 7:{
                     // Confirm Order
                     if (cart.isEmpty()) {
                         System.out.println("Your cart is empty! Add books to the cart first.");
                     } else {
                         order = cart.checkout(); // Create order from cart
                         if (order != null) {
+                            Discount discountProxy = new DiscountProxy(); // Proxy instance for discount handling
+                            boolean applyingDiscount = true;
+
+                            while (applyingDiscount) {
+                                System.out.println("Do you want to use a discount code? (y/n):");
+                                String response = scanner.nextLine().trim().toLowerCase();
+
+                                if (response.equals("y")) {
+                                    System.out.println("Enter your discount code:");
+                                    String discountCode = scanner.nextLine();
+
+                                    double discountedTotal = discountProxy.applyDiscount(order.getTotalCost(), discountCode);
+
+                                    if (discountedTotal < order.getTotalCost()) {
+                                        order.setTotalCost(discountedTotal);
+                                        System.out.println("Discount applied successfully!");
+                                        applyingDiscount = false; // Exit the loop
+                                    } else {
+                                        System.out.println("Invalid discount code. Please try again.");
+                                    }
+                                } else if (response.equals("n")) {
+                                    applyingDiscount = false; // Exit the loop
+                                } else {
+                                    System.out.println("Invalid input. Please enter 'y' or 'n'.");
+                                }
+                            }
+
                             System.out.println("Order confirmed!");
                             System.out.println("Your Order:");
                             order.getBooks().forEach(System.out::println);
-                            System.out.println("Total Cost: " + order.getTotalCost());
+                            System.out.println("Total Cost: " + order.getTotalCost() + "$");
+
+                            order.setStatus(OrderStatus.PENDING);
                         }
                     }
-                    break;
-                case 8:
+                    break;}
+
+                case 8:{
                     // View and Cancel Order
                     if (order != null) {
                         if (order.getStatus() == OrderStatus.PENDING) {
@@ -352,8 +447,8 @@ public class Main {
                     } else {
                         System.out.println("You have no active order to view or cancel.");
                     }
-                    break;
-                case 9:
+                    break;}
+                case 9:{
                     // Proceed to Checkout
                     if (order != null && order.getStatus() == OrderStatus.PENDING) {
                         System.out.println("Proceeding to Checkout...");
@@ -362,8 +457,8 @@ public class Main {
                         System.out.println("Total Cost: " + order.getTotalCost());
                         System.out.println("Confirm the order for checkout (y/n): ");
                         String checkoutChoice = scanner.nextLine();
-                        if (checkoutChoice.equalsIgnoreCase("y")) {
-                            order.updateStatus(OrderStatus.COMPLETED);  // Update status to COMPLETED
+                        if (checkoutChoice.equalsIgnoreCase("y")) {/*
+                            order.updateStatus(OrderStatus.COMPLETED);  // Update status to COMPLETED*/
                             System.out.println("Order successfully completed. Thank you!");
                             // Add the completed order to the OrderHistory (now tracking purchases)
                             cart.clearCart();
@@ -375,74 +470,102 @@ public class Main {
                     } else {
                         System.out.println("Please confirm the order first before proceeding to checkout.");
                     }
-                    break;
+                    break;}
 
-                case 10:
-                    // View Purchase History
-                    if (order != null && order.getStatus() == OrderStatus.COMPLETED) {
-                        System.out.println("Your completed orders:");
-                        List<Book> purchasedBooks = order.getBooks();
-                        purchasedBooks.forEach(System.out::println);
-                    } else {
-                        System.out.println("You must complete an order to view purchase history.");
-                    }
-                    break;
+                case 10:{
+                    orderHistory.getOrders().forEach(System.out::println);
+                    break;}
 
-                case 11:
-                    // Leave Review for Purchased Book
-                    if (order != null && order.getStatus() == OrderStatus.COMPLETED) {
-                        System.out.println("Your completed orders:");
-                        List<Book> purchasedBooks = order.getBooks();
-                        for (int i = 0; i < purchasedBooks.size(); i++) {
-                            System.out.println((i + 1) + ". " + purchasedBooks.get(i).getTitle());
+                // Case 11: Leave Review for Purchased Book from Order History
+                case 11: {
+                    // Get all orders for the customer
+                    List<Order> customerOrders = orderHistory.getOrders();
+                    if (!customerOrders.isEmpty()) {
+                        System.out.println("Your purchased books from all orders:");
+
+                        // Collect all the books from the order history (ensure no duplicates)
+                        Set<Book> reviewableBooks = new HashSet<>();
+                        for (Order ord : customerOrders) {
+                            List<Book> purchasedBooks = ord.getBooks();
+                            reviewableBooks.addAll(purchasedBooks); // Add books to the reviewable set
                         }
 
-                        System.out.print("Enter the number of the book you want to review: ");
-                        int bookChoice = scanner.nextInt();
+                        // Display the books and allow the customer to choose which to review
+                        int bookIndex = 1;
+                        for (Book book : reviewableBooks) {
+                            System.out.println(bookIndex + ". " + book.getTitle());
+                            bookIndex++;
+                        }
+
+                        System.out.print("Enter the index of the book you want to review: ");
+                        int chosenIndex = scanner.nextInt() - 1;  // User enters index (1-based)
                         scanner.nextLine(); // Consume newline
 
-                        if (bookChoice < 1 || bookChoice > purchasedBooks.size()) {
-                            System.out.println("Invalid choice. Please select a valid book.");
-                            break;
+                        // Get the chosen book
+                        Book bookToReview = (Book) reviewableBooks.toArray()[chosenIndex];
+
+                        // Check if the customer has already reviewed the book
+                        boolean hasReviewed = false;
+                        for (Review existingReview : bookToReview.getReviews()) {
+                            if (existingReview.getCustomer().equals(customer)) {
+                                hasReviewed = true;
+                                break;  // Stop once we find a review by the same customer
+                            }
                         }
 
-                        Book bookToReview = purchasedBooks.get(bookChoice - 1);
-                        System.out.print("Enter rating (1-5): ");
-                        int rating = scanner.nextInt();
-                        scanner.nextLine(); // Consume newline
+                        if (hasReviewed) {
+                            System.out.println("You have already reviewed this book.");
+                        } else {
+                            // Ask for the review rating
+                            System.out.print("Enter rating (1-5): ");
+                            int rating = scanner.nextInt();
+                            scanner.nextLine();  // Consume newline
 
-                        if (rating < 1 || rating > 5) {
-                            System.out.println("Invalid rating. Please enter a rating between 1 and 5.");
-                            break;
+                            // Validate the rating
+                            if (rating < 1 || rating > 5) {
+                                System.out.println("Invalid rating. Please enter a rating between 1 and 5.");
+                            } else {
+                                // Ask for the review text
+                                System.out.print("Enter your review text: ");
+                                String reviewText = scanner.nextLine();
+
+                                // Create and add the review
+                                Review review = new Review(bookToReview, reviewText, rating, customer);
+                                bookToReview.addReview(review);
+
+                                System.out.println("Review successfully added for: " + bookToReview.getTitle());
+                            }
                         }
-
-                        System.out.print("Enter your review: ");
-                        String reviewText = scanner.nextLine();
-
-                        Review review = new Review(bookToReview, reviewText, rating, customer);
-                        bookToReview.addReview(review);
-                        System.out.println("Review added successfully!");
                     } else {
-                        System.out.println("You must complete an order before leaving a review.");
+                        System.out.println("You have no completed orders to review.");
                     }
                     break;
+                }
 
-                case 12:
-                    // View Review History
-                    if (order != null && order.getStatus() == OrderStatus.COMPLETED) {
+                // Case 12: View Review History
+                case 12: {
+                    // Get all orders for the customer
+                    List<Order> customerOrders = orderHistory.getOrders();
+                    if (!customerOrders.isEmpty()) {
                         System.out.println("Your review history:");
-                        List<Book> purchasedBooks = order.getBooks();
+
                         boolean foundReviews = false;
 
-                        for (Book book : purchasedBooks) {
-                            List<Review> reviews = book.getReviews();
-                            for (Review review : reviews) {
-                                if (review.getCustomer() != null && review.getCustomer().equals(customer)) {
-                                    System.out.println("Book: " + book.getTitle());
-                                    System.out.println("Rating: " + review.getStarRating());
-                                    System.out.println("Review: " + review.getReviewText());
-                                    System.out.println("-----------------------------");
-                                    foundReviews = true;
+                        // Iterate through each order and its books
+                        for (Order ord : customerOrders) {
+                            List<Book> purchasedBooks = ord.getBooks();
+
+                            // Check each book for reviews
+                            for (Book book : purchasedBooks) {
+                                List<Review> reviews = book.getReviews();
+                                for (Review review : reviews) {
+                                    if (review.getCustomer() != null && review.getCustomer().equals(customer)) {
+                                        System.out.println("Book: " + book.getTitle());
+                                        System.out.println("Rating: " + review.getStarRating());
+                                        System.out.println("Review: " + review.getReviewText());
+                                        System.out.println("-----------------------------");
+                                        foundReviews = true;
+                                    }
                                 }
                             }
                         }
@@ -451,23 +574,24 @@ public class Main {
                             System.out.println("You have not left any reviews yet.");
                         }
                     } else {
-                        System.out.println("You must complete an order before viewing your review history.");
+                        System.out.println("You have no completed orders to view reviews.");
                     }
                     break;
+                }
 
-                case 13:
+
+                case 13:{
                     // Notify customer with order status update
                     if (order != null) {
                         NotificationService.notifyCustomer(order);  // Notify the customer
                     } else {
                         System.out.println("You must have an order to get the notification.");
                     }
-                    break;
-
-                case 14:
+                    break;}
+                case 14:{
                     // Exit
                     System.out.println("Exiting...");
-                    return;
+                    return;}
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
